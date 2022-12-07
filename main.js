@@ -24,6 +24,21 @@ const style = new Style({
   }),
 });
 
+
+const source_for_drawing = new VectorSource();
+const vector_for_drawing = new VectorLayer({
+  source: source_for_drawing,
+  style: {
+    'fill-color': 'rgba(255, 255, 255, 0.2)',
+    'stroke-color': '#ffcc33',
+    'stroke-width': 2,
+    'circle-radius': 7,
+    'circle-fill-color': '#ffcc33',
+  },
+});
+
+
+
 const vector = new VectorLayer({
   background: 'white',
   source: new VectorSource({
@@ -32,33 +47,6 @@ const vector = new VectorLayer({
     wrapX: false,
   }),
 });
-
-
-// const vector = new VectorLayer({
-//     style: {
-//       'fill-color': 'rgba(0,255,0,0.3)',
-//       'stroke-color': '#0000FF',
-//       'stroke-width': 2,
-//       'circle-radius': 7,
-//       'circle-fill-color': '#0000FF',
-//     },
-//   });
-
-
-// const vectorLayer = new VectorLayer({
-//   background: 'black', // for background color
-//   source: new VectorSource({
-//     url: 'assets/geojson.json',
-//     format: new GeoJSON(),
-//     warpX:false 
-//   }),
-//   style: function (feature) {
-//     const color = feature.get('COLOR') || 'white';
-//     style.getFill().setColor(color);
-//     return style;
-//   },
-// });
-
 
 
 const select = new Select({
@@ -75,12 +63,44 @@ extent[2] += extent[2];
 
 const map = new Map({
   interactions: defaultInteractions().extend([select, modify_forMap]),
-  layers: [vector],
+  layers: [vector,vector_for_drawing],
   target: 'map',
   view: new View({
     center: transform([90.19530825000014,24.988718323000086], 'EPSG:4326', 'EPSG:3857'),
     zoom: 13,
+    extent
   }),
 });
+
+
+const modify = new Modify({source: source_for_drawing});
+map.addInteraction(modify);
+
+let draw, snap; // global so we can remove them later
+const typeSelect = document.getElementById('type');
+
+function addInteractions() {
+  draw = new Draw({
+    source: source_for_drawing,
+    type: typeSelect.value,
+  });
+  map.addInteraction(draw);
+  snap = new Snap({source: source_for_drawing});
+  map.addInteraction(snap);
+}
+
+/**
+ * Handle change event.
+ */
+typeSelect.onchange = function () {
+  map.removeInteraction(draw);
+  map.removeInteraction(snap);
+  addInteractions();
+};
+
+addInteractions();
+
+
+
 
 
